@@ -192,7 +192,6 @@ def sortQueryString(queryString):
 ###############################################################################
 # main                                                                        #
 ###############################################################################
-jsontext = {}
 if __name__ == "__main__":
 
     opts = parse_options( sys.argv[1:] )
@@ -312,6 +311,6 @@ if __name__ == "__main__":
 
     print('\nRESPONSE++++++++++++++++++++++++++++++++++++')
     print('Response code: %d\n' % r.status_code)
-    #print(r.text)
+    print(r.text)
     jsontext = r.text
-    print(jsontext)
+    global(jsontext)
