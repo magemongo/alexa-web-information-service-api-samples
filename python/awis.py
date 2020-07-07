@@ -315,3 +315,4 @@ if __name__ == "__main__":
     print(r.text)
     data = r.text
     df = pd.read_json(data, orient='records')
+    df
