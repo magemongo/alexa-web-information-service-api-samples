@@ -15,6 +15,7 @@
 # crdentials from the Cognito pool.
 #
 
+import pandas as pd
 import sys, os, base64, hashlib, hmac
 import logging, getopt
 import boto3
@@ -309,8 +310,8 @@ if __name__ == "__main__":
     print('Request URL = ' + request_url)
     r = requests.get(request_url, headers=headers)
     
-    print(r.text)
     print('\nRESPONSE++++++++++++++++++++++++++++++++++++')
     print('Response code: %d\n' % r.status_code)
-    
-jsontext = str(r.text)
+    print(r.text)
+    data = r.text
+    df = pd.read_json(data, orient='records')
