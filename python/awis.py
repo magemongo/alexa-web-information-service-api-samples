@@ -312,6 +312,6 @@ if __name__ == "__main__":
     print('\nRESPONSE++++++++++++++++++++++++++++++++++++')
     print('Response code: %d\n' % r.status_code)
     print(r.text)
-    file = open("resp_text.txt", "w")
+    file = open("resp_text.json", "w")
     file.write(r.text)
     file.close()
