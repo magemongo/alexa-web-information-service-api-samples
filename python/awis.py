@@ -314,4 +314,5 @@ if __name__ == "__main__":
     print(r.text)
     jsontext = r.text
     dict = {}
-    dict.append(jsontext)
+    dict['1'] = []
+    dict['1'].append(jsontext)
