@@ -312,7 +312,7 @@ if __name__ == "__main__":
     
     print('\nRESPONSE++++++++++++++++++++++++++++++++++++')
     print('Response code: %d\n' % r.status_code)
-    print(r.text)
+    #print(r.text)
     data = r.text
     df = pd.read_json(data, orient='records')
-    df
+    df.head()
