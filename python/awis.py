@@ -312,7 +312,6 @@ if __name__ == "__main__":
     print('\nRESPONSE++++++++++++++++++++++++++++++++++++')
     print('Response code: %d\n' % r.status_code)
     print(r.text)
-    jsontext = r.text
-    dictio = {}
-    dictio['1'] = []
-    dictio['1'].append(jsontext)
+    file = open("resp_text.txt", "w")
+    file.write(r.text)
+    file.close()
