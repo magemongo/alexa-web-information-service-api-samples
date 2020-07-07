@@ -308,8 +308,9 @@ if __name__ == "__main__":
     print('\nBEGIN REQUEST++++++++++++++++++++++++++++++++++++')
     print('Request URL = ' + request_url)
     r = requests.get(request_url, headers=headers)
-
+    
+    print(r.text)
     print('\nRESPONSE++++++++++++++++++++++++++++++++++++')
     print('Response code: %d\n' % r.status_code)
-    print(r.text)
+    
 jsontext = str(r.text)
