@@ -127,7 +127,7 @@ def refresh_credentials(user):
     client_idp = boto3.client('cognito-idp', region_name=cognito_region, aws_access_key_id='', aws_secret_access_key='')
     client_identity = boto3.client('cognito-identity', region_name='us-east-1')
 
-    password = getpass.getpass('Password: ')
+    password = 'Pipotab1' #getpass.getpass('Password: ')
     response = client_idp.initiate_auth(
         ClientId=cognito_client_id,
         AuthFlow='USER_PASSWORD_AUTH',
