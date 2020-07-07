@@ -313,6 +313,6 @@ if __name__ == "__main__":
     print('Response code: %d\n' % r.status_code)
     print(r.text)
     jsontext = r.text
-    dict = {}
-    dict['1'] = []
-    dict['1'].append(jsontext)
+    dictio = {}
+    dictio['1'] = []
+    dictio['1'].append(jsontext)
