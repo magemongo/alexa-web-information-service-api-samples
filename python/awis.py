@@ -313,4 +313,4 @@ if __name__ == "__main__":
     print('Response code: %d\n' % r.status_code)
     print(r.text)
     jsontext = r.text
-    global(jsontext)
+    global jsontext
