@@ -14,7 +14,8 @@
 # sample demonstrates how to make a SigV4 signed request and refresh
 # crdentials from the Cognito pool.
 #
-
+import json
+import pandas as pd
 import sys, os, base64, hashlib, hmac
 import logging, getopt
 import boto3
@@ -49,75 +50,8 @@ cognito_region = 'us-east-1'
 ###############################################################################
 # usage                                                                       #
 ###############################################################################
-def usage( ):
-    sys.stderr.write ( """
-Usage: awis.py [options]
 
-  Make a signed request to Alexa Web Information API service
 
-  Options:
-     --action                Service Action
-     -u, --user              Username
-     -k, --key               API Key
-     -o, --options           Service Options
-     -?, --help       Print this help message and exit.
-
-  Examples:
-     UrlInfo:		awis.py -k 98hu7.... -u User --action urlInfo --options "&ResponseGroup=Rank&Url=sfgate.com"
-     CategoryBrowse:	awis.py -k 98hu7.... -u User --action CategoryBrowse --options "&Descriptions=True&Path=Top%2FArts%2FVideo&ResponseGroup=Categories"
-""" )
-
-###############################################################################
-# parse_options                                                               #
-###############################################################################
-def parse_options( argv ):
-    """Parse command line options."""
-
-    opts = {}
-
-    urlargs = {}
-
-    try:
-        user_opts, user_args = getopt.getopt( \
-            argv, \
-            'k:u:o:a:t:?', \
-            [ 'key=', 'user=', 'options=', 'action=', 'help=' ] )
-    except Exception as e:
-        print('Command parse error:', e)
-        log.error( "Unable to parse command line" )
-        return None
-
-    if ( '-?', '' ) in user_opts or ( '--help', '' ) in user_opts:
-        opts['help'] = True
-        return opts
-    #
-    # Convert command line options to dictionary elements
-    #
-    for opt in user_opts:
-        if  opt[0] == '-k' or opt[0] == '--key':
-            opts['key'] = opt[1]
-        elif opt[0] == '-u' or opt[0] == '--user':
-            opts['user'] = opt[1]
-        elif opt[0] == '-a' or opt[0] == '--action':
-            opts['action'] = opt[1]
-        elif opt[0] == '-o' or opt[0] == '--options':
-            opts['options'] = opt[1]
-        elif opt[0] == '--action':
-            opts['action'] = opt[1]
-        elif opt[0] == '-v' or opt[0] == '--verbose':
-            log.verbose()
-
-    if 'key' not in opts or \
-       'user' not in opts or \
-       'action' not in opts:
-        log.error( "Missing required arguments" )
-        return None
-
-    #
-    # Return a dictionary of settings
-    #
-    success = True
-    return opts
 
 ###############################################################################
 # refresh_credentials                                                         #
@@ -181,137 +115,173 @@ def getSignatureKey(key, dateStamp, regionName, serviceName):
 # sortQueryString                                                             #
 ###############################################################################
 def sortQueryString(queryString):
+    #print(queryString)
     queryTuples = parse_qs(queryString)
     sortedQueryString = ""
     sep=""
     for key in sorted(queryTuples.keys()):
         sortedQueryString = sortedQueryString + sep + key + "=" + quote_plus(queryTuples[key][0])
         sep="&"
+    #print(sortedQueryString)
     return sortedQueryString
 
 ###############################################################################
 # main                                                                        #
 ###############################################################################
-if __name__ == "__main__":
+from shared_vars import links
+title = ['3 Months','1 Months','7 Days']
+opts = {}
+success = True
+opts['key'] = "ahzU8Qh4xL6cROyuEcIOO5jPzonw8lpR72uA8cS6"
+opts['action'] = 'urlInfo'
+opts['options'] = "Output=json&ResponseGroup=UsageStats&Url="+links[0]
+user = 'antonio@contentlovers.co'
+df = pd.DataFrame() 
+df_to_clean = pd.DataFrame()
 
-    opts = parse_options( sys.argv[1:] )
 
-    if not opts:
-        usage( )
-        sys.exit( -1 )
+for i in range(100):
+  opts['options'] = "Output=json&ResponseGroup=UsageStats&Url="+links[i]
+  if __name__ == "__main__":
 
-    if 'help' in opts:
-        usage( )
-        sys.exit( 0 )
+      #opts = parse_options( sys.argv[1:] )
 
-    user = opts['user']
+      if not opts:
+          usage( )
+          sys.exit( -1 )
 
-    if not os.path.isfile(credentials_file):
-        refresh_credentials(user)
+      if 'help' in opts:
+          usage( )
+          sys.exit( 0 )
 
-    # Get credentials to access api from local file. Refresh credentials from Cognito pool if necessary
-    while True:
-        config = ConfigParser()
-        config.read(credentials_file)
+      if not os.path.isfile(credentials_file):
+          refresh_credentials(user)
 
-        access_key = config.get("DEFAULT", "aws_access_key_id")
-        secret_key = config.get("DEFAULT", "aws_secret_access_key")
-        session_token = config.get("DEFAULT", "aws_session_token")
-        expiration = config.get("DEFAULT", "expiration")
+      # Get credentials to access api from local file. Refresh credentials from Cognito pool if necessary
+      while True:
+          config = ConfigParser()
+          config.read(credentials_file)
 
-        exp_time = float(expiration)
-        cur_time = time.mktime(datetime.now().timetuple())
+          access_key = config.get("DEFAULT", "aws_access_key_id")
+          secret_key = config.get("DEFAULT", "aws_secret_access_key")
+          session_token = config.get("DEFAULT", "aws_session_token")
+          expiration = config.get("DEFAULT", "expiration")
 
-        if cur_time > exp_time:
-            refresh_credentials(user)
-        else:
-            break
+          exp_time = float(expiration)
+          cur_time = time.mktime(datetime.now().timetuple())
 
-    # Create a date for headers and the credential string
-    t = datetime.utcnow()
-    amzdate = t.strftime('%Y%m%dT%H%M%SZ')
-    datestamp = t.strftime('%Y%m%d') # Date w/o time, used in credential scope
+          if cur_time > exp_time:
+              refresh_credentials(user)
+          else:
+              break
 
-    # ************* TASK 1: CREATE A CANONICAL REQUEST *************
-    # http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
+      # Create a date for headers and the credential string
+      t = datetime.utcnow()
+      amzdate = t.strftime('%Y%m%dT%H%M%SZ')
+      datestamp = t.strftime('%Y%m%d') # Date w/o time, used in credential scope
 
-    # Step 1 is to define the verb (GET, POST, etc.)--already done.
+      # ************* TASK 1: CREATE A CANONICAL REQUEST *************
+      # http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
 
-    # Step 2: Create canonical URI--the part of the URI from domain to query
-    # string (use '/' if no path)
-    canonical_uri = '/api'
+      # Step 1 is to define the verb (GET, POST, etc.)--already done.
 
-    # Step 3: Create the canonical query string. In this example (a GET request),
-    # request parameters are in the query string. Query string values must
-    # be URL-encoded (space=%20). The parameters must be sorted by name.
-    canonical_querystring = 'Action=' + opts['action']
-    if 'options' in opts:
-        canonical_querystring += "&" +  opts[ 'options']
-    canonical_querystring = sortQueryString(canonical_querystring)
+      # Step 2: Create canonical URI--the part of the URI from domain to query
+      # string (use '/' if no path)
+      canonical_uri = '/api'
 
-    # Step 4: Create the canonical headers and signed headers. Header names
-    # must be trimmed and lowercase, and sorted in code point order from
-    # low to high. Note that there is a trailing \n.
-    canonical_headers = 'host:' + host + '\n' + 'x-amz-date:' + amzdate + '\n'
+      # Step 3: Create the canonical query string. In this example (a GET request),
+      # request parameters are in the query string. Query string values must
+      # be URL-encoded (space=%20). The parameters must be sorted by name.
+      canonical_querystring = 'Action=' + opts['action']
+      if 'options' in opts:
+          canonical_querystring += "&" +  opts['options']
+      canonical_querystring = sortQueryString(canonical_querystring)
 
-    # Step 5: Create the list of signed headers. This lists the headers
-    # in the canonical_headers list, delimited with ";" and in alpha order.
-    # Note: The request can include any headers; canonical_headers and
-    # signed_headers lists those that you want to be included in the
-    # hash of the request. "Host" and "x-amz-date" are always required.
-    signed_headers = 'host;x-amz-date'
+      # Step 4: Create the canonical headers and signed headers. Header names
+      # must be trimmed and lowercase, and sorted in code point order from
+      # low to high. Note that there is a trailing \n.
+      canonical_headers = 'host:' + host + '\n' + 'x-amz-date:' + amzdate + '\n'
 
-    # Step 6: Create payload hash (hash of the request body content). For GET
-    # requests, the payload is an empty string ("").
-    payload_hash = hashlib.sha256(('').encode('utf-8')).hexdigest()
+      # Step 5: Create the list of signed headers. This lists the headers
+      # in the canonical_headers list, delimited with ";" and in alpha order.
+      # Note: The request can include any headers; canonical_headers and
+      # signed_headers lists those that you want to be included in the
+      # hash of the request. "Host" and "x-amz-date" are always required.
+      signed_headers = 'host;x-amz-date'
 
-    # Step 7: Combine elements to create canonical request
-    canonical_request = method + '\n' + canonical_uri + '\n' + canonical_querystring + '\n' + canonical_headers + '\n' + signed_headers + '\n' + payload_hash
+      # Step 6: Create payload hash (hash of the request body content). For GET
+      # requests, the payload is an empty string ("").
+      payload_hash = hashlib.sha256(('').encode('utf-8')).hexdigest()
 
-    # ************* TASK 2: CREATE THE STRING TO SIGN*************
-    # Match the algorithm to the hashing algorithm you use, either SHA-1 or
-    # SHA-256 (recommended)
-    algorithm = 'AWS4-HMAC-SHA256'
-    credential_scope = datestamp + '/' + region + '/' + service + '/' + 'aws4_request'
-    string_to_sign = algorithm + '\n' +  amzdate + '\n' +  credential_scope + '\n' +  hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()
+      # Step 7: Combine elements to create canonical request
+      canonical_request = method + '\n' + canonical_uri + '\n' + canonical_querystring + '\n' + canonical_headers + '\n' + signed_headers + '\n' + payload_hash
 
-    # ************* TASK 3: CALCULATE THE SIGNATURE *************
-    # Create the signing key using the function defined above.
-    signing_key = getSignatureKey(secret_key, datestamp, region, service)
+      # ************* TASK 2: CREATE THE STRING TO SIGN*************
+      # Match the algorithm to the hashing algorithm you use, either SHA-1 or
+      # SHA-256 (recommended)
+      algorithm = 'AWS4-HMAC-SHA256'
+      credential_scope = datestamp + '/' + region + '/' + service + '/' + 'aws4_request'
+      string_to_sign = algorithm + '\n' +  amzdate + '\n' +  credential_scope + '\n' +  hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()
 
-    # Sign the string_to_sign using the signing_key
-    signature = hmac.new(signing_key, (string_to_sign).encode('utf-8'), hashlib.sha256).hexdigest()
+      # ************* TASK 3: CALCULATE THE SIGNATURE *************
+      # Create the signing key using the function defined above.
+      signing_key = getSignatureKey(secret_key, datestamp, region, service)
 
-    # ************* TASK 4: ADD SIGNING INFORMATION TO THE REQUEST *************
-    # The signing information can be either in a query string value or in
-    # a header named Authorization. This code shows how to use a header.
-    # Create authorization header and add to request headers
-    authorization_header = algorithm + ' ' + 'Credential=' + access_key + '/' + credential_scope + ', ' +  'SignedHeaders=' + signed_headers + ', ' + 'Signature=' + signature
+      # Sign the string_to_sign using the signing_key
+      signature = hmac.new(signing_key, (string_to_sign).encode('utf-8'), hashlib.sha256).hexdigest()
 
-    # The request can include any headers, but MUST include "host", "x-amz-date",
-    # and (for this scenario) "Authorization". "host" and "x-amz-date" must
-    # be included in the canonical_headers and signed_headers, as noted
-    # earlier. Order here is not significant.
-    # Python note: The 'host' header is added automatically by the Python 'requests' library.
-    #headers = {'x-amz-date':amzdate, 'Authorization':authorization_header}
-    headers = {'Accept':'application/xml',
-               'Content-Type': content_type,
-               'X-Amz-Date':amzdate,
-               'Authorization': authorization_header,
-               'x-amz-security-token': session_token,
-               'x-api-key': opts['key']
-              }
+      # ************* TASK 4: ADD SIGNING INFORMATION TO THE REQUEST *************
+      # The signing information can be either in a query string value or in
+      # a header named Authorization. This code shows how to use a header.
+      # Create authorization header and add to request headers
+      authorization_header = algorithm + ' ' + 'Credential=' + access_key + '/' + credential_scope + ', ' +  'SignedHeaders=' + signed_headers + ', ' + 'Signature=' + signature
 
-    # ************* SEND THE REQUEST *************
-    request_url = endpoint + canonical_uri + "?" + canonical_querystring
+      # The request can include any headers, but MUST include "host", "x-amz-date",
+      # and (for this scenario) "Authorization". "host" and "x-amz-date" must
+      # be included in the canonical_headers and signed_headers, as noted
+      # earlier. Order here is not significant.
+      # Python note: The 'host' header is added automatically by the Python 'requests' library.
+      #headers = {'x-amz-date':amzdate, 'Authorization':authorization_header}
+      headers = {'Accept':'application/xml',
+                'Content-Type': content_type,
+                'X-Amz-Date':amzdate,
+                'Authorization': authorization_header,
+                'x-amz-security-token': session_token,
+                'x-api-key': opts['key']
+                }
 
-    print('\nBEGIN REQUEST++++++++++++++++++++++++++++++++++++')
-    print('Request URL = ' + request_url)
-    r = requests.get(request_url, headers=headers)
-    
-    print('\nRESPONSE++++++++++++++++++++++++++++++++++++')
-    print('Response code: %d\n' % r.status_code)
-    print(r.text)
-    file = open("resp_text.json", "w")
-    file.write(r.text)
-    file.close()
+      # ************* SEND THE REQUEST *************
+      request_url = endpoint + canonical_uri + "?" + canonical_querystring
+
+      #print('\nBEGIN REQUEST++++++++++++++++++++++++++++++++++++')
+      #print('Request URL = ' + request_url)
+      r = requests.get(request_url, headers=headers)
+      
+      #print('\nRESPONSE++++++++++++++++++++++++++++++++++++')
+      #print('Response code: %d\n' % r.status_code)
+      #print(r.text)
+      print('loading')
+      file = open("resp_text.json", "w")
+      file.write(r.text)
+      file.close()
+      
+      json_file = '/content/alexa-web-information-service-api-samples/python/resp_text.json'
+      try: 
+        with open(json_file, 'r') as handle:
+          parsed = json.load(handle)
+        df_temp = pd.json_normalize(parsed['Awis']["Results"]["Result"]["Alexa"]["TrafficData"], max_level=1)
+        df_temp.drop('ContributingSubdomains.ContributingSubdomain', axis=1, inplace=True)
+        a = df_temp['UsageStatistics.UsageStatistic'][0]
+        for j in range(3):
+          temp_list = []
+          temp_list.append(a[j])
+          df_temp[title[j]] = temp_list
+        df_temp.drop('UsageStatistics.UsageStatistic', axis=1, inplace=True)
+        df = df.append(df_temp, ignore_index=True)
+      except:
+        df_temp2 = pd.json_normalize(parsed)
+        df_to_clean = df_to_clean.append(df_temp, ignore_index=True)
+
+df_to_clean.to_string('/content/teste_clean.txt') 
+df.to_string('/content/teste.txt')
+      
