@@ -60,7 +60,7 @@ def refresh_credentials(user):
     client_idp = boto3.client('cognito-idp', region_name=cognito_region, aws_access_key_id='', aws_secret_access_key='')
     client_identity = boto3.client('cognito-identity', region_name='us-east-1')
 
-    password = 'Pipotab1' #getpass.getpass('Password: ')
+    password = #SENHA! #getpass.getpass('Password: ')
     response = client_idp.initiate_auth(
         ClientId=cognito_client_id,
         AuthFlow='USER_PASSWORD_AUTH',
@@ -135,7 +135,7 @@ success = True
 opts['key'] = "ahzU8Qh4xL6cROyuEcIOO5jPzonw8lpR72uA8cS6"
 opts['action'] = 'urlInfo'
 opts['options'] = "Output=json&ResponseGroup=UsageStats&Url="+links[0]
-user = 'antonio@contentlovers.co'
+user = #EMAIL
 df = pd.DataFrame() 
 df_to_clean = pd.DataFrame()
 
